@@ -13,17 +13,18 @@ couriers = {
     }
 }
 data = {
-    'prev_month': '01',
+    'prev_month': '00',
     'disc_limit': 10,
-    'disc_left': 0, #by default
+    'disc_left': 0,  # by default
+    'lp_l_shipment': 0,
 }
 
 
-
-def check_disc(trans): # or better call it check month?
+def check_month(trans):  # or better call it check month?
     if trans['tr_date'][1] != data['prev_month']:
         data['disc_left'] = data['disc_limit']
         data['prev_month'] = trans['tr_date'][1]  # transaction month
+        data['lp_l_shipment'] = 0
     else:
         pass
 
@@ -54,7 +55,7 @@ def check_s_price(trans):
         print(out_data)
 
 
-def min_s_price(): # I think we need to implement this to check s size fnction
+def min_s_price():  # I think we need to implement this to check s size fnction
     s_prc_list = []
     for courier in couriers:
         s_prc_list.append(couriers[courier]['price_s'])
@@ -68,12 +69,40 @@ def la_poste(trans):
         case 'M':
             pass
         case 'L':
-            pass
-    print('LP')
+            data['lp_l_shipment'] += 1
+            if data['lp_l_shipment'] == 3:
+                disc = couriers['LP']['price_l']
+                if data['disc_left'] - disc >= 0:
+                    data['disc_left'] -= disc
+                    out_data = {
+                        'price': 0,
+                        'disc': disc,
+                    }
+                    print(out_data)
+
+                else:
+                    disc = data['disc_left']
+                    data['disc_left'] = 0
+                    out_data = {
+                        'price': couriers['LP']['price_l'] - disc,
+                        'disc': disc
+                    }
+                    print(out_data)
+
+
+
+    print(data)
 
 
 def mondial_relay(trans):
-    pass
+    match trans['size']:
+        case 'S':
+            check_s_price(trans)
+        case 'M':
+            pass
+        case 'L':
+            pass
+    print(data)
 
 
 with open('input.txt', 'r', encoding='utf-8') as data_file:
@@ -88,7 +117,7 @@ with open('input.txt', 'r', encoding='utf-8') as data_file:
         except:
             print('Ignored')
         else:
-            check_disc(trans)
+            check_month(trans)
             print(data)
             match trans['courier']:
                 case 'LP':
