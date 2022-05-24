@@ -1,7 +1,12 @@
 """
-Program calculates shipment discount and outputs it to the screen.
-If we need to ad more couriers just ad courier data to dictionary, add another case to discount_calculator f-n
+About program:
+Couriers data is stored in couriers dict.
+Default data for calculation is stored in data dict.
+Program calculates shipment discount and outputs it to the screen if necessary we can save it to a file instead.
+If we need to add more couriers: just add courier data to dictionary, add another case to discount_calculator f-n
 and make new f-n with logic for that courier.
+If we need to add additional rules: create new function, assign it to the specific courier and shipment size case.
+Tests:
 
 Rules:
 All S shipments should always match the lowest S package price among the providers.
@@ -40,8 +45,8 @@ def discount_calculator(input_file):
     Handles exceptions.
     """
     with open(input_file, 'r', encoding='utf-8') as data_file:
-        for transaction_line in data_file:  # line turi /n
-            transaction_list = transaction_line.split()  # Splits string to list
+        for transaction_line in data_file:
+            transaction_list = transaction_line.split()  # Splits string to list, removes \n
             try:
                 #  Trying make dict from list
                 shipment = {
@@ -63,7 +68,6 @@ def discount_calculator(input_file):
                         discount_data = mondial_relay(shipment)
                     case None:
                         raise Exception('No courier data found')
-
                 output_data(transaction_list, discount_data)
 
 
@@ -82,7 +86,7 @@ def output_data(shipment, discount_data, bad_input_data=False):  # Need to chang
 
 def la_poste(shipment):
     """
-    La Poste couriers discount logic.
+    "La Poste" couriers discount logic.
     Checks shipment size and calculates discount data.
     """
     match shipment['size']:
@@ -100,7 +104,6 @@ def la_poste(shipment):
             data['lp_l_count'] += 1
             if data['lp_l_count'] == 3:
                 discount = couriers['LP']['price_l']
-
                 if data['disc_left'] - discount >= 0:
                     data['disc_left'] -= discount
                     discount_data = {
@@ -128,7 +131,7 @@ def la_poste(shipment):
 
 def mondial_relay(shipment):
     """
-    Mondial Relay couriers discount logic.
+    "Mondial Relay" couriers discount logic.
     Checks shipment size and calculates discount data.
     """
     match shipment['size']:
