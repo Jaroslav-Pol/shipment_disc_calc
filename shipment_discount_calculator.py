@@ -1,4 +1,5 @@
 couriers = {
+    #  Dictionary with couriers data
     'LP': {
         'name': 'La Poste',
         'price_s': 1.5,
@@ -13,124 +14,173 @@ couriers = {
     }
 }
 data = {
-    'input_file': 'input.txt',
+    # Default variables for calculation
     'prev_month': '00',
-    'disc_limit': 10,
-    'disc_left': 0,  # by default
-    'lp_l_count': 0,
-    'disc_ship': 0,
-    'price_ship': 0,
+    'disc_limit': 10,  # Discount limit per month
+    'disc_left': 0,
+    'lp_l_count': 0,  # Number of LP company's L size shipments in given month
 }
 
 
-def save(data_ln, ignored=False):
-    if ignored:
-        print(f"{' '.join(data_ln)} Ignored")
+def output_data(shipment, discount_data, bad_input_data=False):  # Need to change name
+    """
+    Outputs shipment(list) and discount data(dict) if input data is correct.
+    Here we also can save data to a specific file if necessary.
+    """
+    if bad_input_data:
+        print(f"{' '.join(shipment)} Ignored")
     else:
-        print(f"{' '.join(data_ln)} "
-              f"{float_to_str(data['price_ship'])} "
-              f"{float_to_str(data['disc_ship'])}")
+        print(f"{' '.join(shipment)} "
+              f"{float_to_str(discount_data['reduced_price'])} "
+              f"{float_to_str(discount_data['discount'])}")
     # with open('result.txt', 'a') as result:
-    #     result.write(f'{result_ln}\n')
+    #     result.write()
 
 
-def check_month(trans):  # or better call it check month?
-    if trans['tr_date'][1] != data['prev_month']:
+def check_month(shipment):
+    """If shipment month is new resets discount data"""
+    if shipment['tr_date'][1] != data['prev_month']:
         data['disc_left'] = data['disc_limit']
-        data['prev_month'] = trans['tr_date'][1]  # transaction month
+        data['prev_month'] = shipment['tr_date'][1]  # transaction month
         data['lp_l_count'] = 0
     else:
         pass
 
 
-def float_to_str(float_nr):
-    """If argument is float or integer f-n converts it to string type float with 2 decimals"""
+def float_to_str(float_arg):
+    """If argument is float or integer converts it to string type number with 2 decimals"""
     try:
-        return '{:.2f}'.format(float_nr)
+        return '{:.2f}'.format(float_arg)
     except:
-        return float_nr
+        return float_arg
 
 
-def check_s_price(trans):
-    """Checks s size package discount, out data we will change later with return"""
-    disc = couriers[trans['courier']]['price_s'] - min_s_price()
-    if disc == 0:
-        data['price_ship'] = couriers[trans['courier']]['price_s']  # formating float to string
-        data['disc_ship'] = '-'
-    elif data['disc_left'] - disc > 0:
-        data['disc_left'] -= disc
-        data['price_ship'] = min_s_price()
-        data['disc_ship'] = disc
+def calc_s_price(shipment):
+    """Calculates S size package price and discount"""
+    discount = couriers[shipment['courier']]['price_s'] - min_s_price()
+    if discount == 0:
+        discount_data = {
+            'reduced_price': couriers[shipment['courier']]['price_s'],
+            'discount': '-',
+        }
+        return discount_data
+
+    elif data['disc_left'] - discount > 0:
+        data['disc_left'] -= discount
+        discount_data = {
+            'reduced_price': min_s_price(),
+            'discount': discount,
+        }
+        return discount_data
+
     else:
-        disc = data['disc_left']
+        discount = data['disc_left']
         data['disc_left'] = 0
-        data['price_ship'] = couriers[trans['courier']]['price_s'] - disc
-        data['disc_ship'] = disc
+        discount_data = {
+            'reduced_price': couriers[shipment['courier']]['price_s'] - discount,
+            'discount': discount,
+        }
+        return discount_data
 
 
 def min_s_price():  # I think we need to implement this to check s size fnction
-    s_prc_list = []
+    s_price_list = []
     for courier in couriers:
-        s_prc_list.append(couriers[courier]['price_s'])
-    return min(s_prc_list)
+        s_price_list.append(couriers[courier]['price_s'])
+    return min(s_price_list)
 
 
-def la_poste(trans):
-    match trans['size']:
+def la_poste(shipment):
+    match shipment['size']:
         case 'S':
-            check_s_price(trans)
+            return calc_s_price(shipment)
         case 'M':
-            pass
+            discount_data = {
+                'reduced_price': couriers['LP']['price_m'],
+                'discount': '-',
+            }
+            return discount_data
+
         case 'L':
             data['lp_l_count'] += 1
             if data['lp_l_count'] == 3:
-                disc = couriers['LP']['price_l']
-                if data['disc_left'] - disc >= 0:
-                    data['disc_left'] -= disc
-                    data['price_ship'] = 0
-                    data['disc_ship'] = disc
+                discount = couriers['LP']['price_l']
+
+                if data['disc_left'] - discount >= 0:
+                    data['disc_left'] -= discount
+                    discount_data = {
+                        'reduced_price': 0,
+                        'discount': discount,
+                    }
+                    return discount_data
+
                 else:
-                    disc = data['disc_left']
+                    discount = data['disc_left']
                     data['disc_left'] = 0
-                    data['price_ship'] = couriers['LP']['price_l'] - disc
-                    data['disc_ship'] = disc
+                    discount_data = {
+                        'reduced_price': couriers['LP']['price_l'] - discount,
+                        'discount': discount,
+                    }
+                    return discount_data
+
             else:
-                data['price_ship'] = couriers['LP']['price_l']
-                data['disc_ship'] = '-'
+                discount_data = {
+                    'reduced_price': couriers['LP']['price_l'],
+                    'discount': '-',
+                }
+                return discount_data
 
 
-def mondial_relay(trans):
-    match trans['size']:
+def mondial_relay(shipment):
+    match shipment['size']:
         case 'S':
-            check_s_price(trans)
+            return calc_s_price(shipment)
         case 'M':
-            pass
+            discount_data = {
+                'reduced_price': couriers['MR']['price_m'],
+                'discount': '-',
+            }
+            return discount_data
         case 'L':
-            pass
+            discount_data = {
+                'reduced_price': couriers['MR']['price_l'],
+                'discount': '-',
+            }
+            return discount_data
 
 
 def discount_calculator(input_file):
+    """
+    Main f-n, opens file and switch through the cases.
+    Each case is for other courier.
+    Handles exceptions.
+    """
     with open(input_file, 'r', encoding='utf-8') as data_file:
-        for data_ln in data_file:  # line turi /n
-            data_ln = data_ln.split()  # PERDARO I LISTA IR PASALINA LISNUS \N
+        for transaction_line in data_file:  # line turi /n
+            transaction_list = transaction_line.split()  # Splits string to list
             try:
-                trans = {
-                    'tr_date': data_ln[0].split('-'),
-                    'size': data_ln[1],
-                    'courier': data_ln[2]
+                #  Trying make dict from list
+                shipment = {
+                    'tr_date': transaction_list[0].split('-'),
+                    'size': transaction_list[1],
+                    'courier': transaction_list[2]
                 }
-            except:
-                save(data_ln, ignored=True)
+            except IndexError:
+                #  Runs if not enough or not correct data in shipment is given.
+                output_data(transaction_list, discount_data=None, bad_input_data=True)
             else:
-                check_month(trans)
-                match trans['courier']:
+                #  Runs if try block is ok
+                #  Switches through courier cases
+                check_month(shipment)
+                match shipment['courier']:
                     case 'LP':
-                        la_poste(trans)
+                        discount_data = la_poste(shipment)
                     case 'MR':
-                        mondial_relay(trans)
+                        discount_data = mondial_relay(shipment)
                     case None:
-                        print('No courier data found')
-                save(data_ln)
+                        raise Exception('No courier data found')
+
+                output_data(transaction_list, discount_data)
 
 
-discount_calculator(data['input_file'])
+discount_calculator('input.txt')
