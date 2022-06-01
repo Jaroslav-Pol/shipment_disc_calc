@@ -10,7 +10,7 @@ If we need to add additional rules: create new function, assign it to the specif
 Tests:
 I haven't used unit test before often, I am not sure how much tests there should be and what need to be tested.
 Also unfortunately I had not enough time to deep deeper.
-I hope to learn more about testing during my vintership! =)
+
 
 Rules:
 All S shipments should always match the lowest S package price among the providers.
