@@ -6,7 +6,11 @@ Program calculates shipment discount and outputs it to the screen if necessary w
 If we need to add more couriers: just add courier data to dictionary, add another case to discount_calculator f-n
 and make new f-n with logic for that courier.
 If we need to add additional rules: create new function, assign it to the specific courier and shipment size case.
+
 Tests:
+I haven't used unit test before often, I am not sure how much tests there should be and what need to be tested.
+Also unfortunately I had not enough time to deep deeper.
+I hope to learn more about testing during my vintership! =)
 
 Rules:
 All S shipments should always match the lowest S package price among the providers.
@@ -40,12 +44,12 @@ data = {
 
 def discount_calculator(input_file):
     """
-    Main f-n, opens file and switch through the cases.
+    Main f-n thar runs the program. Opens input file and switches cases among couriers.
     Each case is for other courier.
     Handles exceptions.
     """
-    with open(input_file, 'r', encoding='utf-8') as data_file:
-        for transaction_line in data_file:
+    with open(input_file, 'r', encoding='utf-8') as input_file:
+        for transaction_line in input_file:
             transaction_list = transaction_line.split()  # Splits string to list, removes \n
             try:
                 #  Trying make dict from list
@@ -91,7 +95,8 @@ def la_poste(shipment):
     """
     match shipment['size']:
         case 'S':
-            return calc_s_price(shipment)
+            discount_data = calc_s_price(shipment)
+            return discount_data
         case 'M':
             discount_data = {
                 'reduced_price': couriers['LP']['price_m'],
@@ -136,7 +141,8 @@ def mondial_relay(shipment):
     """
     match shipment['size']:
         case 'S':
-            return calc_s_price(shipment)
+            discount_data = calc_s_price(shipment)
+            return discount_data
         case 'M':
             discount_data = {
                 'reduced_price': couriers['MR']['price_m'],
